@@ -12,6 +12,10 @@ set -o pipefail
 #  - LOGS: Journald Optimized & Logrotate
 # ==================================================
 
+# --- Shortcut ---
+SHORTCUT_BIN="/usr/local/bin/irealm"
+REPO_URL="https://raw.githubusercontent.com/Sir-Adnan/Realm-Tunnel-Manager/main/realm.sh"
+
 # --- Colors (Safe Palette) ---
 NC='\033[0m'
 BOLD='\033[1m'
@@ -46,9 +50,6 @@ REALM_BIN="/usr/local/bin/realm"
 LOG_POLICY_STATE_FILE="/etc/realm/.journald_policy"
 JOURNALD_CONF_FILE="/etc/systemd/journald.conf.d/99-realm-manager.conf"
 WATCHDOG_LOGROTATE_FILE="/etc/logrotate.d/realm-watchdog"
-
-# --- Shortcut ---
-SHORTCUT_BIN="/usr/local/bin/irealm"
 
 # --- Root Check ---
 if [[ $EUID -ne 0 ]]; then
@@ -308,10 +309,35 @@ install_dependencies() {
 
 setup_shortcut() {
     if [ ! -s "$SHORTCUT_BIN" ]; then
-        echo -e "#!/bin/bash\nbash $0" > "$SHORTCUT_BIN"
-        chmod +x "$SHORTCUT_BIN"
-        echo -e "  ${HI_GREEN}✔ Installed! Type 'irealm' to run.${NC}"
-        sleep 1
+        echo ""
+        draw_line
+        echo -e "  ${ICON_INSTALL}  ${BOLD}Setup 'irealm' Shortcut?${NC}"
+        echo -e "  ${BLUE}Allows you to run the manager by typing 'irealm'.${NC}"
+        echo ""
+
+        echo -ne "  ${HI_PINK}➤ Install (y/yes to confirm)? : ${NC}"
+        read -r install_opt
+        install_opt=${install_opt:-y}
+
+        if confirm_yes "$install_opt"; then
+            echo -e "  ${YELLOW}Downloading script to $SHORTCUT_BIN...${NC}"
+            
+            # اینجا مطمئن می‌شویم که REPO_URL تعریف شده باشد
+            if [ -z "$REPO_URL" ]; then
+                REPO_URL="https://raw.githubusercontent.com/Sir-Adnan/Realm-Tunnel-Manager/main/realm.sh"
+            fi
+
+            curl -L -o "$SHORTCUT_BIN" -fsSL "$REPO_URL"
+            
+            if [ -s "$SHORTCUT_BIN" ]; then
+                chmod +x "$SHORTCUT_BIN"
+                echo -e "  ${HI_GREEN}✔ Installed! Type 'irealm' to run.${NC}"
+                sleep 2
+            else
+                echo -e "  ${RED}✖ Download failed. Check internet connection.${NC}"
+                sleep 2
+            fi
+        fi
     fi
 }
 
